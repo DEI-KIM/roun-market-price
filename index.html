@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로운 시장단가 비교</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif; background: #F3F4F6; min-height: 100vh; }
+
+    /* ── Header ── */
+    .header { background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%); color: white; padding: 22px 32px 18px; }
+    .header h1 { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .header .meta { font-size: 12.5px; opacity: 0.75; margin-top: 5px; }
+
+    /* ── Tabs ── */
+    .tabs { background: white; border-bottom: 1px solid #E5E7EB; padding: 0 32px; display: flex; }
+    .tab { padding: 14px 20px; font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2.5px solid transparent; color: #9CA3AF; transition: all .15s; white-space: nowrap; }
+    .tab:hover { color: #374151; }
+    .tab.active { color: #1B5E20; border-bottom-color: #1B5E20; font-weight: 700; }
+
+    /* ── Filter bar ── */
+    .filter-bar { background: white; padding: 10px 32px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #E5E7EB; flex-wrap: wrap; }
+    .filter-group { display: flex; gap: 5px; align-items: center; }
+    .filter-label { font-size: 11px; color: #9CA3AF; font-weight: 600; margin-right: 2px; }
+
+    .grade-btn { padding: 5px 13px; border-radius: 20px; border: 1.5px solid #D1D5DB; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #6B7280; transition: all .12s; }
+    .grade-btn:hover { border-color: #9CA3AF; color: #374151; }
+    .grade-btn.active { background: #1B5E20; color: white; border-color: #1B5E20; font-weight: 700; }
+
+    .sort-btn { padding: 5px 11px; border-radius: 6px; border: 1px solid #E5E7EB; background: white; font-size: 12px; cursor: pointer; color: #6B7280; transition: all .12s; }
+    .sort-btn:hover { background: #F9FAFB; }
+    .sort-btn.active { background: #FFF7ED; color: #EA580C; border-color: #FED7AA; font-weight: 700; }
+
+    .divider { width: 1px; height: 20px; background: #E5E7EB; margin: 0 4px; }
+
+    .search-wrap { position: relative; }
+    .search-input { padding: 6px 12px 6px 30px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 12px; width: 170px; outline: none; }
+    .search-input:focus { border-color: #1B5E20; }
+    .search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 13px; color: #9CA3AF; pointer-events: none; }
+
+    .count-label { margin-left: auto; font-size: 12px; color: #9CA3AF; font-weight: 500; white-space: nowrap; }
+
+    /* ── Card grid ── */
+    .card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 20px 32px 32px; }
+    @media (max-width: 1300px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 960px)  { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px)  { .card-grid { grid-template-columns: 1fr; } }
+
+    /* ── Card ── */
+    .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); position: relative; transition: box-shadow .15s; }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    .card-rank { position: absolute; top: -9px; left: -9px; width: 26px; height: 26px; border-radius: 50%; color: white; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .card-name-wrap { flex: 1; min-width: 0; padding-right: 8px; }
+    .card-category { font-size: 16px; font-weight: 700; color: #111827; }
+    .card-subname { font-size: 11px; color: #9CA3AF; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-price-wrap { text-align: right; flex-shrink: 0; }
+    .card-price-label { font-size: 10px; color: #9CA3AF; }
+    .card-price { font-size: 24px; font-weight: 800; color: #111827; line-height: 1.1; }
+    .card-price-unit { font-size: 11px; color: #9CA3AF; }
+
+    .card-usage { display: flex; gap: 12px; margin: 6px 0; }
+    .usage-item { font-size: 11px; color: #6B7280; }
+    .usage-item strong { color: #374151; }
+
+    .card-tags { display: flex; gap: 5px; margin: 10px 0 8px; flex-wrap: wrap; }
+    .tag { padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 500; }
+    .tag-item   { background: #EFF6FF; color: #1D4ED8; }
+    .tag-source { background: #F5F3FF; color: #6D28D9; }
+    .tag-grade  { background: #EDE9FE; color: #5B21B6; }
+    .tag-grade-special { background: #FFF7ED; color: #C2410C; font-weight: 700; }
+    .tag-none   { background: #F3F4F6; color: #9CA3AF; }
+
+    .divider-line { border: none; border-top: 1px solid #F3F4F6; margin: 8px 0; }
+
+    .market-rows { display: flex; flex-direction: column; gap: 3px; }
+    .market-row { display: flex; justify-content: space-between; font-size: 12px; }
+    .market-row .mlabel { color: #9CA3AF; }
+    .market-row .mval   { font-weight: 600; color: #374151; }
+
+    .saving-section { margin-top: 8px; }
+    .saving-label { font-size: 11px; color: #9CA3AF; }
+    .saving-amount { font-size: 15px; font-weight: 700; color: #EA580C; }
+
+    .rate-badge { display: inline-block; padding: 5px 14px; border-radius: 6px; font-size: 14px; font-weight: 700; margin-top: 8px; }
+    .rate-pos  { background: #DCFCE7; color: #15803D; }
+    .rate-neg  { background: #FEE2E2; color: #DC2626; }
+    .rate-zero { background: #F3F4F6; color: #6B7280; }
+
+    .no-market-data { text-align: center; padding: 14px 0 6px; color: #D1D5DB; font-size: 12px; }
+    .no-map-data { text-align: center; padding: 20px 0 8px; color: #D1D5DB; font-size: 12px; }
+
+    /* cheapest supplier highlight */
+    .cheapest-badge { position: absolute; top: 8px; right: 8px; background: #DCFCE7; color: #15803D; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+
+    /* ── Analysis view ── */
+    .analysis-wrap { padding: 20px 32px 32px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+    @media (max-width: 900px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .summary-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); border-left: 4px solid; }
+    .summary-indicator { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+    .summary-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .summary-count { font-size: 34px; font-weight: 800; color: #111827; line-height: 1; }
+    .summary-count span { font-size: 16px; font-weight: 500; }
+    .summary-sub { font-size: 12px; color: #9CA3AF; margin-top: 5px; }
+
+    .chart-box { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+    .chart-title { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 3px; }
+    .chart-sub { font-size: 11.5px; color: #9CA3AF; margin-bottom: 16px; }
+
+    /* ── Loading / empty ── */
+    .loading-wrap { display: flex; align-items: center; justify-content: center; padding: 80px; color: #9CA3AF; font-size: 14px; gap: 10px; }
+    .spinner { width: 20px; height: 20px; border: 2px solid #E5E7EB; border-top-color: #1B5E20; border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <h1>🌿 로운 시장단가 비교</h1>
+  <div class="meta" id="meta-info">데이터 로딩 중…</div>
+</div>
+
+<!-- ── Tabs ── -->
+<div class="tabs">
+  <div class="tab active" id="tab-cards" onclick="switchTab('cards')">📊 카드뷰</div>
+  <div class="tab" id="tab-analysis" onclick="switchTab('analysis')">📈 우선순위 분석</div>
+</div>
+
+<!-- ── Filter bar ── -->
+<div class="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">등급</span>
+    <button class="grade-btn" onclick="setGrade('하')">하</button>
+    <button class="grade-btn" onclick="setGrade('보통')">보통</button>
+    <button class="grade-btn" onclick="setGrade('상')">상</button>
+    <button class="grade-btn active" onclick="setGrade('특')">특</button>
+    <button class="grade-btn" onclick="setGrade('전체')">전체</button>
+  </div>
+
+  <div class="divider" id="sort-divider"></div>
+
+  <div class="filter-group" id="sort-group">
+    <span class="filter-label">정렬</span>
+    <button class="sort-btn active" onclick="setSort('중요도')">🔴 중요도</button>
+    <button class="sort-btn" onclick="setSort('총사용액')">🔥 총사용액</button>
+    <button class="sort-btn" onclick="setSort('총사용량')">🌿 총사용량</button>
+    <button class="sort-btn" onclick="setSort('절감률')">🎯 절감률</button>
+    <button class="sort-btn" onclick="setSort('품목순')">📦 품목순</button>
+  </div>
+
+  <div class="divider"></div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="text" placeholder="품목 검색…" oninput="setSearch(this.value)" id="search-input">
+  </div>
+
+  <span class="count-label" id="count-label">—</span>
+</div>
+
+<!-- ── Cards view ── -->
+<div id="view-cards">
+  <div class="card-grid" id="card-grid">
+    <div class="loading-wrap" style="grid-column:1/-1">
+      <div class="spinner"></div> 데이터 로딩 중…
+    </div>
+  </div>
+</div>
+
+<!-- ── Analysis view ── -->
+<div id="view-analysis" style="display:none">
+  <div class="analysis-wrap">
+    <div class="summary-grid" id="summary-grid"></div>
+    <div class="chart-box">
+      <div class="chart-title">📊 자재 중요도 4분면 분석</div>
+      <div class="chart-sub">X축: 총사용액(원) · Y축: 절감률(%) · 버블 크기: 총사용량 · 중앙선 — 세로: 사용액 중앙값 / 가로: 절감률 0%</div>
+      <canvas id="bubble-chart" style="max-height:480px"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────
+const SUPABASE_URL = 'https://xbiltcfbnfttudcdekym.supabase.co';
+const ANON_KEY     = 'sb_publishable_vbusRd0ecWyVzJu1DgAbNg_Nw7cTsBD';
+
+// ── State ─────────────────────────────────────────────
+let rawRows    = [];      // all view rows for latest date
+let itemMap    = {};      // grouped by 로운_자재명
+let cheapest   = {};      // 로운_품목 → min price_per_g item name
+let currentGrade  = '특';
+let currentSort   = '중요도';
+let currentSearch = '';
+let currentTab    = 'cards';
+let bubbleChart   = null;
+
+// ── Fetch ─────────────────────────────────────────────
+async function fetchData() {
+  const headers = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` };
+
+  // latest date
+  const r1 = await fetch(
+    `${SUPABASE_URL}/rest/v1/roun_vs_market?select=download_date&order=download_date.desc&limit=1`,
+    { headers }
+  );
+  const latest = await r1.json();
+  if (!latest.length) { showError('데이터가 없습니다.'); return; }
+  const date = latest[0].download_date;
+
+  // all rows
+  const r2 = await fetch(
+    `${SUPABASE_URL}/rest/v1/roun_vs_market?download_date=eq.${date}&limit=500`,
+    { headers }
+  );
+  rawRows = await r2.json();
+
+  groupItems();
+  findCheapest();
+
+  // meta
+  const d  = new Date(date);
+  const mo = `${d.getFullYear() - 2000}년 ${d.getMonth() + 1}월`;
+  document.getElementById('meta-info').textContent =
+    `데이터 기준일: ${date} · 가락시장 / 강서시장 · 로운자재 기준: ${mo}`;
+
+  render();
+}
+
+function groupItems() {
+  itemMap = {};
+  rawRows.forEach(row => {
+    const name = row['로운_자재명'];
+    if (!itemMap[name]) {
+      itemMap[name] = {
+        로운_자재명  : name,
+        로운_품목    : row['로운_품목'],
+        로운_단가    : parseFloat(row['로운_단가'])  || 0,
+        총사용량_g   : parseFloat(row['총사용량_g']) || 0,
+        총사용금액   : parseFloat(row['총사용금액']) || 0,
+        시장_품목    : row['시장_품목'],
+        시장_품종    : row['시장_품종'],
+        시장         : row['시장'],
+        매핑여부     : row['매핑여부'],
+        매핑_메모    : row['매핑_메모'],
+        grades       : {}
+      };
+    }
+    const grade = row['등급'];
+    if (grade) {
+      itemMap[name].grades[grade] = {
+        시장_최저단가_g  : parseFloat(row['시장_최저단가_g']) || null,
+        시장_최고단가_g  : parseFloat(row['시장_최고단가_g']) || null,
+        시장_평균단가_g  : parseFloat(row['시장_평균단가_g']) || null,
+        최대절감률_pct   : parseFloat(row['최대절감률_pct'])  ?? null,
+        절감가능금액     : parseFloat(row['절감가능금액'])     ?? null,
+        우선순위         : row['우선순위'],
+        중요도_점수      : parseFloat(row['중요도_점수'])      || 0
+      };
+    } else {
+      // unmapped item
+      itemMap[name].우선순위   = '현상유지';
+      itemMap[name].중요도_점수 = 0;
+    }
+  });
+}
+
+// 같은 품목 내 최저 납품처 계산
+function findCheapest() {
+  cheapest = {};
+  const byCategory = {};
+  Object.values(itemMap).forEach(item => {
+    const cat = item.로운_품목;
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(item);
+  });
+  Object.entries(byCategory).forEach(([cat, items]) => {
+    if (items.length < 2) return; // 단일 납품처는 표시 불필요
+    let minPrice = Infinity, minName = null;
+    items.forEach(item => {
+      if (item.로운_단가 < minPrice) { minPrice = item.로운_단가; minName = item.로운_자재명; }
+    });
+    cheapest[minName] = true;
+  });
+}
+
+// ── Grade helper ──────────────────────────────────────
+const GRADE_ORDER = ['특', '상', '보통', '하'];
+
+function getGradeData(item, grade) {
+  if (grade === '전체') {
+    for (const g of GRADE_ORDER) {
+      if (item.grades[g]) return { grade: g, ...item.grades[g] };
+    }
+    return null;
+  }
+  const d = item.grades[grade];
+  return d ? { grade, ...d } : null;
+}
+
+function getEffectivePriority(item, grade) {
+  const gd = getGradeData(item, grade);
+  return gd?.우선순위 || (item.매핑여부 === false ? '현상유지' : '현상유지');
+}
+
+// ── Format helpers ────────────────────────────────────
+function fWon(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (Math.abs(n) >= 100000000) return `${(n/100000000).toFixed(1)}억원`;
+  if (Math.abs(n) >= 10000000)  return `${(n/10000000).toFixed(1)}천만원`;
+  if (Math.abs(n) >= 1000000)   return `${(n/1000000).toFixed(1)}백만원`;
+  if (Math.abs(n) >= 10000)     return `${Math.round(n/10000)}만원`;
+  return `${Math.round(n).toLocaleString()}원`;
+}
+
+function fG(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (n >= 1000000) return `${(n/1000000).toFixed(1)}t`;
+  if (n >= 1000)    return `${(n/1000).toFixed(1)}kg`;
+  return `${Math.round(n)}g`;
+}
+
+// ── Render router ─────────────────────────────────────
+function render() {
+  const items = Object.values(itemMap);
+
+  // search filter
+  const q = currentSearch.toLowerCase();
+  const filtered = q
+    ? items.filter(i => i.로운_자재명.toLowerCase().includes(q) || i.로운_품목.toLowerCase().includes(q))
+    : items;
+
+  // sort
+  const sorted = [...filtered].sort((a, b) => {
+    if (currentSort === '품목순') {
+      const c = a.로운_품목.localeCompare(b.로운_품목, 'ko');
+      return c !== 0 ? c : a.로운_자재명.localeCompare(b.로운_자재명, 'ko');
+    }
+    const ag = getGradeData(a, currentGrade);
+    const bg = getGradeData(b, currentGrade);
+    if (currentSort === '중요도')  return (bg?.중요도_점수 || 0) - (ag?.중요도_점수 || 0);
+    if (currentSort === '총사용액') return b.총사용금액 - a.총사용금액;
+    if (currentSort === '총사용량') return b.총사용량_g - a.총사용량_g;
+    if (currentSort === '절감률')  return (bg?.최대절감률_pct ?? -Infinity) - (ag?.최대절감률_pct ?? -Infinity);
+    return 0;
+  });
+
+  // count
+  document.getElementById('count-label').textContent = `${filtered.length} / ${items.length}개`;
+
+  if (currentTab === 'cards')    renderCards(sorted);
+  else                           renderAnalysis(sorted);
+}
+
+// ── Cards ─────────────────────────────────────────────
+function renderCards(items) {
+  const grid = document.getElementById('card-grid');
+  if (!items.length) {
+    grid.innerHTML = '<div class="loading-wrap" style="grid-column:1/-1">검색 결과가 없습니다</div>';
+    return;
+  }
+
+  let rank = 0;
+  grid.innerHTML = items.map(item => {
+    const gd     = getGradeData(item, currentGrade);
+    const prio   = gd?.우선순위 || (item.매핑여부 ? '가격경쟁력' : '현상유지');
+    const isCheap = cheapest[item.로운_자재명];
+
+    // rank badge (중요도 정렬 & 절감가능한 경우만)
+    const showRank = currentSort === '중요도' && gd?.중요도_점수 > 0;
+    if (showRank) rank++;
+    const rankColor = { 최우선: '#F97316', 절감가능: '#FBBF24', 가격경쟁력: '#10B981', 현상유지: '#9CA3AF' }[prio] || '#9CA3AF';
+    const rankBadge = showRank
+      ? `<div class="card-rank" style="background:${rankColor}">#${rank}</div>` : '';
+    const cheapBadge = isCheap ? `<div class="cheapest-badge">최저 납품가</div>` : '';
+
+    // grade display
+    const gradeLabel = currentGrade === '전체' ? (gd?.grade || '') : currentGrade;
+    const gradeClass = gradeLabel === '특' ? 'tag-grade-special' : 'tag-grade';
+
+    // tags
+    const tags = item.매핑여부
+      ? `<div class="card-tags">
+           <span class="tag tag-item">${item.시장_품목 || item.로운_품목}</span>
+           <span class="tag tag-source">${item.시장 || ''}</span>
+           ${gradeLabel ? `<span class="tag ${gradeClass}">${gradeLabel}등급</span>` : ''}
+           ${item.매핑_메모 ? `<span class="tag tag-none" title="${item.매핑_메모}">근사치</span>` : ''}
+         </div>`
+      : `<div class="card-tags"><span class="tag tag-none">시장 데이터 없음</span></div>`;
+
+    // market data section
+    let marketSection = '';
+    if (!item.매핑여부) {
+      marketSection = `<div class="no-map-data">시장 매핑 데이터 없음<br><small style="color:#E5E7EB">${item.매핑_메모 || ''}</small></div>`;
+    } else if (!gd) {
+      marketSection = `<div class="no-market-data">${gradeLabel || '해당'} 등급 시장 데이터 없음</div>`;
+    } else {
+      const rateCls = gd.최대절감률_pct > 0 ? 'rate-pos' : gd.최대절감률_pct < 0 ? 'rate-neg' : 'rate-zero';
+      const rateLabel = gd.최대절감률_pct > 0 ? `+${gd.최대절감률_pct}%` :
+                        gd.최대절감률_pct !== null ? `${gd.최대절감률_pct}%` : '—';
+      marketSection = `
+        <div class="market-rows">
+          <div class="market-row"><span class="mlabel">시장 최저가</span><span class="mval">${gd.시장_최저단가_g?.toFixed(3) ?? '—'} 원/g</span></div>
+          <div class="market-row"><span class="mlabel">시장 최고가</span><span class="mval">${gd.시장_최고단가_g?.toFixed(3) ?? '—'} 원/g</span></div>
+        </div>
+        <div class="saving-section">
+          <div class="saving-label">절감 가능 금액</div>
+          <div class="saving-amount">${fWon(gd.절감가능금액)}</div>
+        </div>
+        <div><span class="rate-badge ${rateCls}">${rateLabel}</span></div>`;
+    }
+
+    return `
+      <div class="card">
+        ${rankBadge}${cheapBadge}
+        <div class="card-top">
+          <div class="card-name-wrap">
+            <div class="card-category">${item.로운_품목}</div>
+            <div class="card-subname" title="${item.로운_자재명}">${item.로운_자재명}</div>
+          </div>
+          <div class="card-price-wrap">
+            <div class="card-price-label">로운 단가</div>
+            <div class="card-price">${item.로운_단가?.toFixed(2)}</div>
+            <div class="card-price-unit">원/g</div>
+          </div>
+        </div>
+        <div class="card-usage">
+          <div class="usage-item">총사용액 <strong>${fWon(item.총사용금액)}</strong></div>
+          <div class="usage-item">총사용량 <strong>${fG(item.총사용량_g)}</strong></div>
+        </div>
+        ${tags}
+        <hr class="divider-line">
+        ${marketSection}
+      </div>`;
+  }).join('');
+}
+
+// ── Analysis ──────────────────────────────────────────
+const PRIORITY_CONFIG = {
+  최우선:   { color: '#EF4444', bg: '#FEF2F2', label: '최우선',   sub: '절감 가능 + 사용액 큰 품목' },
+  절감가능: { color: '#F59E0B', bg: '#FFFBEB', label: '절감 가능', sub: '절감 가능 + 소량 품목' },
+  가격경쟁력: { color: '#10B981', bg: '#ECFDF5', label: '가격 경쟁력', sub: '로운이 이미 저렴' },
+  현상유지: { color: '#6B7280', bg: '#F9FAFB', label: '현상 유지', sub: '시장 데이터 없음 포함' }
+};
+
+function renderAnalysis(items) {
+  // bucket items
+  const buckets = { 최우선: [], 절감가능: [], 가격경쟁력: [], 현상유지: [] };
+  items.forEach(item => {
+    const gd = getGradeData(item, currentGrade);
+    const p  = gd?.우선순위 || (item.매핑여부 ? '가격경쟁력' : '현상유지');
+    (buckets[p] || buckets['현상유지']).push(item);
+  });
+
+  // summary cards
+  document.getElementById('summary-grid').innerHTML = Object.entries(PRIORITY_CONFIG).map(([key, cfg]) => {
+    const arr      = buckets[key] || [];
+    const totalAmt = arr.reduce((s, i) => s + i.총사용금액, 0);
+    return `
+      <div class="summary-card" style="border-left-color:${cfg.color}">
+        <div class="summary-indicator">
+          <div class="summary-dot" style="background:${cfg.color}"></div>
+          <span style="color:${cfg.color}">${cfg.label}</span>
+        </div>
+        <div class="summary-count">${arr.length}<span>개</span></div>
+        <div class="summary-sub">사용액 합계 ${fWon(totalAmt)}<br>${cfg.sub}</div>
+      </div>`;
+  }).join('');
+
+  // bubble chart
+  renderBubble(items);
+}
+
+function renderBubble(items) {
+  const ctx = document.getElementById('bubble-chart').getContext('2d');
+  if (bubbleChart) { bubbleChart.destroy(); bubbleChart = null; }
+
+  // median usage amount for center line
+  const amts = items.map(i => i.총사용금액).sort((a,b)=>a-b);
+  const median = amts[Math.floor(amts.length/2)] || 0;
+
+  const datasets = Object.entries(PRIORITY_CONFIG).map(([key, cfg]) => {
+    const pts = items
+      .filter(item => {
+        const gd = getGradeData(item, currentGrade);
+        const p  = gd?.우선순위 || (item.매핑여부 ? '가격경쟁력' : '현상유지');
+        return p === key;
+      })
+      .map(item => {
+        const gd = getGradeData(item, currentGrade);
+        return {
+          x    : item.총사용금액,
+          y    : gd?.최대절감률_pct ?? 0,
+          r    : Math.max(7, Math.min(35, Math.sqrt(item.총사용량_g / 200))),
+          label: item.로운_품목,
+          subname: item.로운_자재명
+        };
+      });
+    return {
+      label          : cfg.label,
+      data           : pts,
+      backgroundColor: cfg.color + 'AA',
+      borderColor    : cfg.color,
+      borderWidth    : 1.5
+    };
+  });
+
+  bubbleChart = new Chart(ctx, {
+    type: 'bubble',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        x: {
+          title: { display: true, text: '총사용액 (원)', font: { size: 11 } },
+          ticks: { callback: v => fWon(v), font: { size: 10 } },
+          grid : { color: '#F3F4F6' }
+        },
+        y: {
+          title: { display: true, text: '절감률 (%)', font: { size: 11 } },
+          ticks: { callback: v => `${v}%`, font: { size: 10 } },
+          grid : { color: '#F3F4F6' }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = ctx.raw;
+              return [`${d.label}`, `사용액: ${fWon(d.x)}`, `절감률: ${d.y}%`];
+            }
+          }
+        },
+        legend : { position: 'top', labels: { font: { size: 12 }, padding: 16 } },
+        annotation: {}
+      }
+    }
+  });
+}
+
+// ── Tab / Grade / Sort / Search ───────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  ['cards','analysis'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`view-${t}`).style.display = t === tab ? '' : 'none';
+  });
+  const sortGroup = document.getElementById('sort-group');
+  const sortDiv   = document.getElementById('sort-divider');
+  sortGroup.style.display = tab === 'cards' ? '' : 'none';
+  sortDiv.style.display   = tab === 'cards' ? '' : 'none';
+  render();
+}
+
+function setGrade(grade) {
+  currentGrade = grade;
+  document.querySelectorAll('.grade-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.textContent.trim() === grade)
+  );
+  render();
+}
+
+function setSort(sort) {
+  currentSort = sort;
+  document.querySelectorAll('.sort-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.textContent.replace(/[^\w가-힣]/g,'').trim() === sort)
+  );
+  render();
+}
+
+function setSearch(val) {
+  currentSearch = val.trim();
+  render();
+}
+
+function showError(msg) {
+  document.getElementById('card-grid').innerHTML =
+    `<div class="loading-wrap" style="grid-column:1/-1;color:#EF4444">${msg}</div>`;
+}
+
+// ── Boot ──────────────────────────────────────────────
+fetchData().catch(err => showError('데이터 로드 실패: ' + err.message));
+</script>
+</body>
+</html>
