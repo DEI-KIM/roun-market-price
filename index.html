@@ -312,6 +312,7 @@ let bubbleChart   = null;
 
 // ── 시계열 / 상품별 state ──────────────────────────────
 let allHistoryRows = [];   // 전 기간 roun_vs_market 데이터
+let allMarketRows  = [];   // 전 기간 market_prices 직접 데이터 (roun_items 불필요)
 let tsMode    = '로운';    // '로운' | '시장'
 let tsYear    = 2026;
 let prodYear  = 2026;
@@ -319,15 +320,43 @@ let selectedProduct    = null;
 let productLineChart   = null;
 let acHighlightIdx     = -1;  // 자동완성 키보드 인덱스
 
+// item_mapping: 시장 품목명 → 로운 품목명
+const MARKET_TO_ROUN = {
+  '가지':  '가지',
+  '감자':  '감자',
+  '깻잎':  '깻잎',
+  '버섯':  '느타리버섯',
+  '당근':  '당근',
+  '마늘':  '마늘',
+  '고구마':'고구마',
+  '대파':  '대파',
+};
+// 시장에서 추적할 품종 필터 (상 등급 기준)
+const MARKET_VARIETY = {
+  '가지':  '가지',
+  '감자':  '홍감자',
+  '깻잎':  '깻잎순',
+  '버섯':  '만가닥버섯',
+  '당근':  '당근 수입',
+  '마늘':  '햇마늘 대서',
+};
+
 // ── Fetch 전체 히스토리 ───────────────────────────────
 async function fetchAllHistory() {
   const headers = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` };
-  // 등급=상 기준으로 가져오되 로운 단가도 포함 (로운 단가는 등급 무관 동일)
+  // roun_vs_market: 로운 단가 포함 전체 데이터
   const r = await fetch(
     `${SUPABASE_URL}/rest/v1/roun_vs_market?select=download_date,로운_품목,로운_자재명,로운_단가,총사용금액,총사용량_g,등급,시장_최저단가_g,최대절감률_pct,절감가능금액&order=download_date.asc&limit=5000`,
     { headers }
   );
   allHistoryRows = await r.json();
+
+  // market_prices 직접 조회 (시장 최저단가 시계열용 — roun_items 없는 연도 포함)
+  const rm = await fetch(
+    `${SUPABASE_URL}/rest/v1/market_prices?select=download_date,source,item_name,variety,grade,price_per_g&grade=eq.상&order=download_date.asc&limit=10000`,
+    { headers }
+  );
+  allMarketRows = await rm.json();
 }
 
 // ── Fetch ─────────────────────────────────────────────
@@ -674,6 +703,8 @@ function renderBubble(items) {
 function buildMonthlyAgg(year) {
   const agg = {};
   const seenRoun = new Set();
+
+  // 로운 단가: roun_vs_market에서 (roun_items가 있는 연도)
   allHistoryRows.forEach(row => {
     if (!row.download_date) return;
     const d = new Date(row.download_date);
@@ -688,10 +719,27 @@ function buildMonthlyAgg(year) {
       agg[prod][month].rounVals.push(parseFloat(row['로운_단가']));
       seenRoun.add(rounKey);
     }
-    if (row['등급'] === '상' && row['시장_최저단가_g'] != null) {
-      agg[prod][month].marketVals.push(parseFloat(row['시장_최저단가_g']));
+  });
+
+  // 시장 단가: market_prices 직접 조회 — roun_items 없는 연도(25년 등)도 커버
+  allMarketRows.forEach(row => {
+    if (!row.download_date) return;
+    const d = new Date(row.download_date);
+    if (d.getFullYear() !== year) return;
+    const month = d.getMonth() + 1;
+    if (row.grade !== '상') return;
+    const rounProd = MARKET_TO_ROUN[row.item_name];
+    if (!rounProd) return;
+    // item_mapping 품종 필터 (정의된 품종만)
+    const expectedVariety = MARKET_VARIETY[row.item_name];
+    if (expectedVariety && row.variety !== expectedVariety) return;
+    if (!agg[rounProd]) agg[rounProd] = {};
+    if (!agg[rounProd][month]) agg[rounProd][month] = { rounVals: [], marketVals: [] };
+    if (row.price_per_g != null) {
+      agg[rounProd][month].marketVals.push(parseFloat(row.price_per_g));
     }
   });
+
   return agg;
 }
 
@@ -713,11 +761,13 @@ function renderTimeSeries() {
   const products = Object.keys(agg).sort((a, b) => (usageMap[b] || 0) - (usageMap[a] || 0));
   const MONTHS   = [1,2,3,4,5,6,7,8,9,10,11,12];
 
-  const dates = [...new Set(
-    allHistoryRows
-      .filter(r => r.download_date && new Date(r.download_date).getFullYear() === tsYear)
-      .map(r => r.download_date)
-  )];
+  const datesFromHistory = allHistoryRows
+    .filter(r => r.download_date && new Date(r.download_date).getFullYear() === tsYear)
+    .map(r => r.download_date);
+  const datesFromMarket = allMarketRows
+    .filter(r => r.download_date && new Date(r.download_date).getFullYear() === tsYear)
+    .map(r => r.download_date);
+  const dates = [...new Set([...datesFromHistory, ...datesFromMarket])];
   document.getElementById('ts-data-count').textContent =
     `${tsYear}년 데이터: ${dates.length}개 날짜`;
 
@@ -930,85 +980,4 @@ function renderProductChart() {
         tooltip: {
           callbacks: {
             label: ctx => {
-              const v = ctx.raw;
-              return v !== null ? `${ctx.dataset.label}: ${v.toFixed(1)}원/g` : '데이터 없음';
-            }
-          }
-        }
-      }
-    }
-  });
-
-  const tableRows = MONTHS.map(m => {
-    const r = rounData[m-1], mkt = marketData[m-1];
-    if (r === null && mkt === null) return null;
-    const rate = (r && mkt) ? ((r - mkt) / r * 100) : null;
-    const rateCls = rate === null ? '' : rate > 0 ? 'prod-saving-pos' : 'prod-saving-neg';
-    const rateStr = rate !== null ? `${rate > 0 ? '+' : ''}${rate.toFixed(1)}%` : '—';
-    return `<tr>
-      <td>${m}월</td>
-      <td>${r !== null ? r.toFixed(1) : '—'}</td>
-      <td>${mkt !== null ? mkt.toFixed(1) : '—'}</td>
-      <td class="${rateCls}">${rateStr}</td>
-    </tr>`;
-  }).filter(Boolean).join('');
-
-  document.getElementById('prod-table').innerHTML = `
-    <thead><tr>
-      <th>월</th><th>로운 단가 (원/g)</th><th>시장 최저단가 (원/g)</th><th>절감률</th>
-    </tr></thead>
-    <tbody>${tableRows || '<tr><td colspan="4" style="text-align:center;color:#D1D5DB;padding:20px">데이터 없음</td></tr>'}</tbody>
-  `;
-}
-
-// ── Tab / Grade / Sort / Search ───────────────────────
-function switchTab(tab) {
-  currentTab = tab;
-  const ALL_TABS = ['cards','analysis','timeseries','product'];
-  ALL_TABS.forEach(t => {
-    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
-    document.getElementById(`view-${t}`).style.display = t === tab ? '' : 'none';
-  });
-  const filterBar = document.getElementById('filter-bar');
-  filterBar.style.display = (tab === 'cards' || tab === 'analysis') ? '' : 'none';
-  const sortGroup = document.getElementById('sort-group');
-  const sortDiv   = document.getElementById('sort-divider');
-  sortGroup.style.display = tab === 'cards' ? '' : 'none';
-  sortDiv.style.display   = tab === 'cards' ? '' : 'none';
-  if (tab === 'timeseries') renderTimeSeries();
-  else if (tab === 'product') { /* 선택 전까지 대기 */ }
-  else render();
-}
-
-function setGrade(grade) {
-  currentGrade = grade;
-  document.querySelectorAll('.grade-btn').forEach(btn =>
-    btn.classList.toggle('active', btn.textContent.trim() === grade)
-  );
-  render();
-}
-
-function setSort(sort) {
-  currentSort = sort;
-  document.querySelectorAll('.sort-btn').forEach(btn =>
-    btn.classList.toggle('active', btn.textContent.replace(/[^\w가-힣]/g,'').trim() === sort)
-  );
-  render();
-}
-
-function setSearch(val) {
-  currentSearch = val.trim();
-  render();
-}
-
-function showError(msg) {
-  document.getElementById('card-grid').innerHTML =
-    `<div class="loading-wrap" style="grid-column:1/-1;color:#EF4444">${msg}</div>`;
-}
-
-// ── Boot ──────────────────────────────────────────────
-Promise.all([fetchData(), fetchAllHistory()])
-  .catch(err => showError('데이터 로드 실패: ' + err.message));
-</script>
-</body>
-</html>
+ 
