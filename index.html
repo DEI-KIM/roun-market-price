@@ -117,6 +117,55 @@
     .loading-wrap { display: flex; align-items: center; justify-content: center; padding: 80px; color: #9CA3AF; font-size: 14px; gap: 10px; }
     .spinner { width: 20px; height: 20px; border: 2px solid #E5E7EB; border-top-color: #1B5E20; border-radius: 50%; animation: spin .6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Tab 3: 시계열 분석 ── */
+    .ts-wrap { padding: 20px 32px 32px; }
+    .ts-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+    .ts-controls-label { font-size: 11px; color: #9CA3AF; font-weight: 600; }
+    .ts-btn-group { display: flex; gap: 4px; }
+    .ts-btn { padding: 5px 14px; border-radius: 6px; border: 1.5px solid #D1D5DB; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #6B7280; transition: all .12s; }
+    .ts-btn:hover { border-color: #9CA3AF; }
+    .ts-btn.active { background: #1B5E20; color: white; border-color: #1B5E20; font-weight: 700; }
+    .ts-divider { width: 1px; height: 20px; background: #E5E7EB; }
+    .ts-table-wrap { overflow-x: auto; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); background: white; }
+    .ts-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 900px; }
+    .ts-table thead tr { background: #F9FAFB; border-bottom: 2px solid #E5E7EB; }
+    .ts-head-prod { padding: 10px 16px; text-align: left; font-weight: 700; color: #374151; font-size: 12px; position: sticky; left: 0; background: #F9FAFB; z-index: 2; white-space: nowrap; min-width: 100px; }
+    .ts-head-month { padding: 10px 8px; text-align: center; font-weight: 600; color: #6B7280; font-size: 11px; min-width: 66px; }
+    .ts-prod-cell { padding: 9px 16px; font-weight: 600; color: #111827; position: sticky; left: 0; background: white; z-index: 1; border-right: 1px solid #F3F4F6; white-space: nowrap; }
+    .ts-table tbody tr:hover .ts-prod-cell,
+    .ts-table tbody tr:hover .ts-cell { background: #F9FAFB; }
+    .ts-table tbody tr:hover .ts-prod-cell { background: #F9FAFB; }
+    .ts-cell { padding: 9px 8px; text-align: center; color: #374151; border-bottom: 1px solid #F3F4F6; }
+    .ts-cell.ts-empty { color: #D1D5DB; }
+    .ts-cell.ts-high { background: #DCFCE7; color: #15803D; font-weight: 600; }
+    .ts-cell.ts-low  { background: #FEE2E2; color: #DC2626; font-weight: 600; }
+    .ts-pct { display: block; font-size: 10px; font-weight: 700; opacity: 0.85; margin-top: 1px; }
+    .ts-legend { display: flex; gap: 16px; margin-top: 12px; font-size: 11px; color: #6B7280; }
+    .ts-legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }
+
+    /* ── Tab 4: 상품별 분석 ── */
+    .prod-wrap { padding: 20px 32px 32px; }
+    .prod-controls { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    .prod-search-outer { position: relative; }
+    .prod-search { padding: 8px 14px; border: 1.5px solid #D1D5DB; border-radius: 8px; font-size: 13px; width: 220px; outline: none; transition: border .12s; }
+    .prod-search:focus { border-color: #1B5E20; }
+    .prod-autocomplete { position: absolute; top: 100%; left: 0; background: white; border: 1px solid #E5E7EB; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 10; width: 220px; max-height: 200px; overflow-y: auto; }
+    .ac-item { padding: 8px 14px; font-size: 13px; cursor: pointer; color: #374151; transition: background .1s; }
+    .ac-item:hover { background: #F0FDF4; color: #1B5E20; }
+    .prod-title { font-size: 17px; font-weight: 700; color: #111827; }
+    .prod-subtitle { font-size: 12px; color: #9CA3AF; margin-top: 2px; }
+    .prod-chart-box { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); position: relative; height: 380px; }
+    .prod-empty { display: flex; align-items: center; justify-content: center; height: 340px; color: #D1D5DB; font-size: 14px; flex-direction: column; gap: 8px; }
+    .prod-table-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); margin-top: 16px; overflow-x: auto; }
+    .prod-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .prod-table th { padding: 8px 12px; text-align: center; font-weight: 600; color: #6B7280; border-bottom: 2px solid #E5E7EB; font-size: 11px; }
+    .prod-table th:first-child { text-align: left; }
+    .prod-table td { padding: 8px 12px; text-align: center; border-bottom: 1px solid #F3F4F6; color: #374151; }
+    .prod-table td:first-child { text-align: left; font-weight: 600; }
+    .prod-table tr:last-child td { border-bottom: none; }
+    .prod-saving-pos { color: #15803D; font-weight: 700; }
+    .prod-saving-neg { color: #DC2626; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -131,14 +180,16 @@
 <div class="tabs">
   <div class="tab active" id="tab-cards" onclick="switchTab('cards')">📊 카드뷰</div>
   <div class="tab" id="tab-analysis" onclick="switchTab('analysis')">📈 우선순위 분석</div>
+  <div class="tab" id="tab-timeseries" onclick="switchTab('timeseries')">📅 시계열 분석</div>
+  <div class="tab" id="tab-product" onclick="switchTab('product')">🔍 상품별 분석</div>
 </div>
 
 <!-- ── Filter bar ── -->
-<div class="filter-bar">
+<div class="filter-bar" id="filter-bar">
   <div class="filter-group">
     <span class="filter-label">등급</span>
-    <button class="grade-btn" onclick="setGrade('상')">상</button>
-    <button class="grade-btn active" onclick="setGrade('특')">특</button>
+    <button class="grade-btn active" onclick="setGrade('상')">상</button>
+    <button class="grade-btn" onclick="setGrade('특')">특</button>
     <button class="grade-btn" onclick="setGrade('전체')">전체</button>
   </div>
 
@@ -183,6 +234,67 @@
   </div>
 </div>
 
+<!-- ── 시계열 분석 view ── -->
+<div id="view-timeseries" style="display:none">
+  <div class="ts-wrap">
+    <div class="ts-controls">
+      <span class="ts-controls-label">데이터</span>
+      <div class="ts-btn-group" id="ts-mode-group">
+        <button class="ts-btn active" data-mode="로운" onclick="setTsMode('로운')">로운 단가</button>
+        <button class="ts-btn" data-mode="시장" onclick="setTsMode('시장')">시장 최저단가</button>
+      </div>
+      <div class="ts-divider"></div>
+      <span class="ts-controls-label">연도</span>
+      <div class="ts-btn-group" id="ts-year-group">
+        <button class="ts-btn active" data-year="2026" onclick="setTsYear(2026)">2026년</button>
+        <button class="ts-btn" data-year="2025" onclick="setTsYear(2025)">2025년</button>
+      </div>
+      <span id="ts-data-count" style="margin-left:auto;font-size:11px;color:#9CA3AF"></span>
+    </div>
+    <div class="ts-table-wrap">
+      <table class="ts-table" id="ts-table">
+        <tbody><tr><td colspan="13" style="text-align:center;padding:60px;color:#D1D5DB">데이터 로딩 중…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="ts-legend">
+      <span><span class="ts-legend-dot" style="background:#DCFCE7;border:1px solid #86EFAC"></span>로운 &gt; 시장 (절감 가능)</span>
+      <span><span class="ts-legend-dot" style="background:#FEE2E2;border:1px solid #FCA5A5"></span>로운 ≤ 시장 (이미 저렴)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── 상품별 분석 view ── -->
+<div id="view-product" style="display:none">
+  <div class="prod-wrap">
+    <div class="prod-controls">
+      <div class="prod-search-outer">
+        <input class="prod-search" type="text" id="prod-search" placeholder="품목 입력 (예: 대파)" oninput="onProdSearch(this.value)" onkeydown="onProdKey(event)" autocomplete="off">
+        <div id="prod-autocomplete" class="prod-autocomplete" style="display:none"></div>
+      </div>
+      <div>
+        <div class="prod-title" id="prod-title">품목을 선택하세요</div>
+        <div class="prod-subtitle" id="prod-subtitle">검색창에 품목명을 입력하거나 선택하세요</div>
+      </div>
+      <div class="ts-divider"></div>
+      <span class="ts-controls-label">연도</span>
+      <div class="ts-btn-group" id="prod-year-group">
+        <button class="ts-btn active" data-year="2026" onclick="setProdYear(2026)">2026년</button>
+        <button class="ts-btn" data-year="2025" onclick="setProdYear(2025)">2025년</button>
+      </div>
+    </div>
+    <div class="prod-chart-box">
+      <div class="prod-empty" id="prod-empty">
+        <span style="font-size:32px">🔍</span>
+        <span>위 검색창에서 분석할 품목을 선택하세요</span>
+      </div>
+      <canvas id="product-chart" style="display:none"></canvas>
+    </div>
+    <div class="prod-table-box" id="prod-table-box" style="display:none">
+      <table class="prod-table" id="prod-table"></table>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Config ────────────────────────────────────────────
 const SUPABASE_URL = 'https://xbiltcfbnfttudcdekym.supabase.co';
@@ -192,11 +304,31 @@ const ANON_KEY     = 'sb_publishable_vbusRd0ecWyVzJu1DgAbNg_Nw7cTsBD';
 let rawRows    = [];      // all view rows for latest date
 let itemMap    = {};      // grouped by 로운_자재명
 let cheapest   = {};      // 로운_품목 → min price_per_g item name
-let currentGrade  = '특';
+let currentGrade  = '상';
 let currentSort   = '중요도';
 let currentSearch = '';
 let currentTab    = 'cards';
 let bubbleChart   = null;
+
+// ── 시계열 / 상품별 state ──────────────────────────────
+let allHistoryRows = [];   // 전 기간 roun_vs_market 데이터
+let tsMode    = '로운';    // '로운' | '시장'
+let tsYear    = 2026;
+let prodYear  = 2026;
+let selectedProduct    = null;
+let productLineChart   = null;
+let acHighlightIdx     = -1;  // 자동완성 키보드 인덱스
+
+// ── Fetch 전체 히스토리 ───────────────────────────────
+async function fetchAllHistory() {
+  const headers = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` };
+  // 등급=상 기준으로 가져오되 로운 단가도 포함 (로운 단가는 등급 무관 동일)
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/roun_vs_market?select=download_date,로운_품목,로운_자재명,로운_단가,총사용금액,총사용량_g,등급,시장_최저단가_g,최대절감률_pct,절감가능금액&order=download_date.asc&limit=5000`,
+    { headers }
+  );
+  allHistoryRows = await r.json();
+}
 
 // ── Fetch ─────────────────────────────────────────────
 async function fetchData() {
@@ -447,7 +579,6 @@ const PRIORITY_CONFIG = {
 };
 
 function renderAnalysis(items) {
-  // bucket items
   const buckets = { 최우선: [], 절감가능: [], 가격경쟁력: [], 현상유지: [] };
   items.forEach(item => {
     const gd = getGradeData(item, currentGrade);
@@ -455,7 +586,6 @@ function renderAnalysis(items) {
     (buckets[p] || buckets['현상유지']).push(item);
   });
 
-  // summary cards
   document.getElementById('summary-grid').innerHTML = Object.entries(PRIORITY_CONFIG).map(([key, cfg]) => {
     const arr      = buckets[key] || [];
     const totalAmt = arr.reduce((s, i) => s + i.총사용금액, 0);
@@ -470,17 +600,12 @@ function renderAnalysis(items) {
       </div>`;
   }).join('');
 
-  // bubble chart
   renderBubble(items);
 }
 
 function renderBubble(items) {
   const ctx = document.getElementById('bubble-chart').getContext('2d');
   if (bubbleChart) { bubbleChart.destroy(); bubbleChart = null; }
-
-  // median usage amount for center line
-  const amts = items.map(i => i.총사용금액).sort((a,b)=>a-b);
-  const median = amts[Math.floor(amts.length/2)] || 0;
 
   const datasets = Object.entries(PRIORITY_CONFIG).map(([key, cfg]) => {
     const pts = items
@@ -542,18 +667,317 @@ function renderBubble(items) {
   });
 }
 
+// ══════════════════════════════════════════════════════
+// ── 탭3: 시계열 분석 ──────────────────────────────────
+// ══════════════════════════════════════════════════════
+
+function buildMonthlyAgg(year) {
+  const agg = {};
+  const seenRoun = new Set();
+  allHistoryRows.forEach(row => {
+    if (!row.download_date) return;
+    const d = new Date(row.download_date);
+    if (d.getFullYear() !== year) return;
+    const month = d.getMonth() + 1;
+    const prod  = row['로운_품목'];
+    if (!prod) return;
+    if (!agg[prod]) agg[prod] = {};
+    if (!agg[prod][month]) agg[prod][month] = { rounVals: [], marketVals: [] };
+    const rounKey = `${prod}|${row.download_date}`;
+    if (!seenRoun.has(rounKey) && row['로운_단가'] != null) {
+      agg[prod][month].rounVals.push(parseFloat(row['로운_단가']));
+      seenRoun.add(rounKey);
+    }
+    if (row['등급'] === '상' && row['시장_최저단가_g'] != null) {
+      agg[prod][month].marketVals.push(parseFloat(row['시장_최저단가_g']));
+    }
+  });
+  return agg;
+}
+
+function avg(arr) {
+  if (!arr || !arr.length) return null;
+  return arr.reduce((s, v) => s + v, 0) / arr.length;
+}
+
+function renderTimeSeries() {
+  const agg      = buildMonthlyAgg(tsYear);
+  // 총사용금액 합산 → 사용량 많은 순 정렬
+  const usageMap = {};
+  allHistoryRows.forEach(row => {
+    const p = row['로운_품목'];
+    if (!p) return;
+    if (!usageMap[p]) usageMap[p] = 0;
+    usageMap[p] += parseFloat(row['총사용금액'] || 0);
+  });
+  const products = Object.keys(agg).sort((a, b) => (usageMap[b] || 0) - (usageMap[a] || 0));
+  const MONTHS   = [1,2,3,4,5,6,7,8,9,10,11,12];
+
+  const dates = [...new Set(
+    allHistoryRows
+      .filter(r => r.download_date && new Date(r.download_date).getFullYear() === tsYear)
+      .map(r => r.download_date)
+  )];
+  document.getElementById('ts-data-count').textContent =
+    `${tsYear}년 데이터: ${dates.length}개 날짜`;
+
+  if (!products.length) {
+    document.getElementById('ts-table').innerHTML =
+      '<tbody><tr><td colspan="13" style="text-align:center;padding:60px;color:#D1D5DB">데이터가 없습니다</td></tr></tbody>';
+    return;
+  }
+
+  const thead = `<thead><tr>
+    <th class="ts-head-prod">자재명</th>
+    ${MONTHS.map(m => `<th class="ts-head-month">${m}월</th>`).join('')}
+  </tr></thead>`;
+
+  const tbody = products.map(prod => {
+    let prevVal = null; // 전월 값 (시장 모드 MoM 계산용)
+    const cells = MONTHS.map(m => {
+      const d    = agg[prod]?.[m];
+      const vals = tsMode === '로운' ? d?.rounVals : d?.marketVals;
+      const val  = avg(vals);
+      if (val === null) {
+        if (tsMode === '시장') prevVal = null;
+        return '<td class="ts-cell ts-empty">—</td>';
+      }
+
+      let cls = 'ts-cell';
+      let label = val.toFixed(2);
+
+      if (tsMode === '로운') {
+        // 로운 단가 vs 시장 단가 비교 (기존 유지)
+        const marketAvg = avg(d?.marketVals);
+        if (marketAvg != null) cls += val > marketAvg ? ' ts-low' : ' ts-high';
+
+      } else if (tsMode === '시장') {
+        // 전월 대비 증감률
+        if (prevVal !== null) {
+          const pct = ((val - prevVal) / prevVal) * 100;
+          const sign = pct >= 0 ? '+' : '';
+          const pctStr = `${sign}${pct.toFixed(0)}%`;
+          label = `${val.toFixed(2)}<span class="ts-pct">${pctStr}</span>`;
+          cls += pct > 0 ? ' ts-low' : ' ts-high';
+          // 가격 상승(빨간), 하락(초록)
+        }
+        prevVal = val;
+      }
+
+      return `<td class="${cls}">${label}</td>`;
+    }).join('');
+    return `<tr><td class="ts-prod-cell">${prod}</td>${cells}</tr>`;
+  }).join('');
+
+  document.getElementById('ts-table').innerHTML = thead + `<tbody>${tbody}</tbody>`;
+}
+
+function setTsMode(mode) {
+  tsMode = mode;
+  document.querySelectorAll('#ts-mode-group .ts-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === mode)
+  );
+  renderTimeSeries();
+}
+
+function setTsYear(year) {
+  tsYear = year;
+  document.querySelectorAll('#ts-year-group .ts-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.year) === year)
+  );
+  if (currentTab === 'timeseries') renderTimeSeries();
+}
+
+// ══════════════════════════════════════════════════════
+// ── 탭4: 상품별 분석 ──────────────────────────────────
+// ══════════════════════════════════════════════════════
+
+function getAllProducts() {
+  return [...new Set(allHistoryRows.map(r => r['로운_품목']).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'ko'));
+}
+
+function onProdSearch(val) {
+  acHighlightIdx = -1;
+  const q  = val.trim();
+  const ac = document.getElementById('prod-autocomplete');
+  if (!q) { ac.style.display = 'none'; ac.innerHTML = ''; return; }
+  const matches = getAllProducts().filter(p => p.includes(q));
+  if (!matches.length) { ac.style.display = 'none'; ac.innerHTML = ''; return; }
+  ac.innerHTML = matches.map((p, i) =>
+    `<div class="ac-item" data-idx="${i}" onmousedown="selectProduct('${p}')">${p}</div>`
+  ).join('');
+  ac.style.display = 'block';
+}
+
+function onProdKey(e) {
+  const ac    = document.getElementById('prod-autocomplete');
+  const items = ac.querySelectorAll('.ac-item');
+  if (!items.length) return;
+  if (e.key === 'ArrowDown') {
+    acHighlightIdx = Math.min(acHighlightIdx + 1, items.length - 1);
+  } else if (e.key === 'ArrowUp') {
+    acHighlightIdx = Math.max(acHighlightIdx - 1, 0);
+  } else if (e.key === 'Enter') {
+    if (acHighlightIdx >= 0) selectProduct(items[acHighlightIdx].textContent);
+    else if (items.length === 1) selectProduct(items[0].textContent);
+    return;
+  } else { return; }
+  items.forEach((el, i) => el.style.background = i === acHighlightIdx ? '#F0FDF4' : '');
+  e.preventDefault();
+}
+
+function selectProduct(prod) {
+  selectedProduct = prod;
+  document.getElementById('prod-search').value = prod;
+  const ac = document.getElementById('prod-autocomplete');
+  ac.style.display = 'none'; ac.innerHTML = '';
+  document.getElementById('prod-title').textContent = prod;
+  document.getElementById('prod-subtitle').textContent =
+    `${prodYear}년 월별 로운 단가 vs 시장 최저단가 (상등급)`;
+  renderProductChart();
+}
+
+function setProdYear(year) {
+  prodYear = year;
+  document.querySelectorAll('#prod-year-group .ts-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.year) === year)
+  );
+  if (selectedProduct) renderProductChart();
+}
+
+function renderProductChart() {
+  if (!selectedProduct) return;
+  const MONTHS    = [1,2,3,4,5,6,7,8,9,10,11,12];
+  const rounByM   = {};
+  const marketByM = {};
+  const seenRoun  = new Set();
+
+  allHistoryRows.forEach(row => {
+    if (row['로운_품목'] !== selectedProduct) return;
+    if (!row.download_date) return;
+    const d = new Date(row.download_date);
+    if (d.getFullYear() !== prodYear) return;
+    const m = d.getMonth() + 1;
+    const rKey = row.download_date;
+    if (!seenRoun.has(rKey) && row['로운_단가'] != null) {
+      if (!rounByM[m]) rounByM[m] = [];
+      rounByM[m].push(parseFloat(row['로운_단가']));
+      seenRoun.add(rKey);
+    }
+    if (row['등급'] === '상' && row['시장_최저단가_g'] != null) {
+      if (!marketByM[m]) marketByM[m] = [];
+      marketByM[m].push(parseFloat(row['시장_최저단가_g']));
+    }
+  });
+
+  const rounData   = MONTHS.map(m => avg(rounByM[m]   ?? []));
+  const marketData = MONTHS.map(m => avg(marketByM[m] ?? []));
+  const hasAny = rounData.some(v => v !== null) || marketData.some(v => v !== null);
+
+  document.getElementById('prod-empty').style.display    = hasAny ? 'none' : 'flex';
+  document.getElementById('product-chart').style.display = hasAny ? 'block' : 'none';
+  document.getElementById('prod-table-box').style.display = hasAny ? 'block' : 'none';
+  if (!hasAny) return;
+
+  if (productLineChart) { productLineChart.destroy(); productLineChart = null; }
+  const ctx = document.getElementById('product-chart').getContext('2d');
+  productLineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: MONTHS.map(m => `${m}월`),
+      datasets: [
+        {
+          label: '로운 단가 (원/g)',
+          data: rounData,
+          borderColor: '#1B5E20',
+          backgroundColor: '#1B5E2018',
+          borderWidth: 2.5,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          fill: false,
+          spanGaps: false,
+          tension: 0.3
+        },
+        {
+          label: '시장 최저단가 - 상등급 (원/g)',
+          data: marketData,
+          borderColor: '#EA580C',
+          backgroundColor: '#EA580C18',
+          borderWidth: 2,
+          borderDash: [6, 3],
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          fill: false,
+          spanGaps: false,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { grid: { color: '#F3F4F6' } },
+        y: {
+          title: { display: true, text: '원/g', font: { size: 11 } },
+          ticks: { callback: v => `${v.toFixed(1)}원`, font: { size: 10 } },
+          grid: { color: '#F3F4F6' }
+        }
+      },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 12 }, padding: 16 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.raw;
+              return v !== null ? `${ctx.dataset.label}: ${v.toFixed(1)}원/g` : '데이터 없음';
+            }
+          }
+        }
+      }
+    }
+  });
+
+  const tableRows = MONTHS.map(m => {
+    const r = rounData[m-1], mkt = marketData[m-1];
+    if (r === null && mkt === null) return null;
+    const rate = (r && mkt) ? ((r - mkt) / r * 100) : null;
+    const rateCls = rate === null ? '' : rate > 0 ? 'prod-saving-pos' : 'prod-saving-neg';
+    const rateStr = rate !== null ? `${rate > 0 ? '+' : ''}${rate.toFixed(1)}%` : '—';
+    return `<tr>
+      <td>${m}월</td>
+      <td>${r !== null ? r.toFixed(1) : '—'}</td>
+      <td>${mkt !== null ? mkt.toFixed(1) : '—'}</td>
+      <td class="${rateCls}">${rateStr}</td>
+    </tr>`;
+  }).filter(Boolean).join('');
+
+  document.getElementById('prod-table').innerHTML = `
+    <thead><tr>
+      <th>월</th><th>로운 단가 (원/g)</th><th>시장 최저단가 (원/g)</th><th>절감률</th>
+    </tr></thead>
+    <tbody>${tableRows || '<tr><td colspan="4" style="text-align:center;color:#D1D5DB;padding:20px">데이터 없음</td></tr>'}</tbody>
+  `;
+}
+
 // ── Tab / Grade / Sort / Search ───────────────────────
 function switchTab(tab) {
   currentTab = tab;
-  ['cards','analysis'].forEach(t => {
+  const ALL_TABS = ['cards','analysis','timeseries','product'];
+  ALL_TABS.forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
     document.getElementById(`view-${t}`).style.display = t === tab ? '' : 'none';
   });
+  const filterBar = document.getElementById('filter-bar');
+  filterBar.style.display = (tab === 'cards' || tab === 'analysis') ? '' : 'none';
   const sortGroup = document.getElementById('sort-group');
   const sortDiv   = document.getElementById('sort-divider');
   sortGroup.style.display = tab === 'cards' ? '' : 'none';
   sortDiv.style.display   = tab === 'cards' ? '' : 'none';
-  render();
+  if (tab === 'timeseries') renderTimeSeries();
+  else if (tab === 'product') { /* 선택 전까지 대기 */ }
+  else render();
 }
 
 function setGrade(grade) {
@@ -583,7 +1007,8 @@ function showError(msg) {
 }
 
 // ── Boot ──────────────────────────────────────────────
-fetchData().catch(err => showError('데이터 로드 실패: ' + err.message));
+Promise.all([fetchData(), fetchAllHistory()])
+  .catch(err => showError('데이터 로드 실패: ' + err.message));
 </script>
 </body>
 </html>
