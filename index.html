@@ -369,12 +369,13 @@ async function fetchAllHistory() {
   );
   allHistoryRows = await r.json();
 
-  // market_prices 직접 조회 — Supabase max_rows=1000 한계 때문에 연도별 분리 fetch
-  const [rm25, rm26] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/market_prices?select=download_date,item_name,variety,grade,price_per_g&grade=eq.상&download_date=gte.2025-01-01&download_date=lt.2026-01-01&order=download_date.asc&limit=1000`, { headers }),
+  // market_prices 직접 조회 — Supabase max_rows=1000 한계 때문에 분기별 분리 fetch
+  const [rm25h1, rm25h2, rm26] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/market_prices?select=download_date,item_name,variety,grade,price_per_g&grade=eq.상&download_date=gte.2025-01-01&download_date=lt.2025-07-01&order=download_date.asc&limit=1000`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/market_prices?select=download_date,item_name,variety,grade,price_per_g&grade=eq.상&download_date=gte.2025-07-01&download_date=lt.2026-01-01&order=download_date.asc&limit=1000`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/market_prices?select=download_date,item_name,variety,grade,price_per_g&grade=eq.상&download_date=gte.2026-01-01&order=download_date.asc&limit=1000`, { headers }),
   ]);
-  allMarketRows = [...await rm25.json(), ...await rm26.json()];
+  allMarketRows = [...await rm25h1.json(), ...await rm25h2.json(), ...await rm26.json()];
 }
 
 // ── Fetch ─────────────────────────────────────────────
