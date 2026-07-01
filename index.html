@@ -321,26 +321,43 @@ let selectedProduct    = null;
 let productLineChart   = null;
 let acHighlightIdx     = -1;  // 자동완성 키보드 인덱스
 
-// item_mapping: 시장 품목명 → 로운 품목명
+// item_mapping: 시장 품목명 → 로운 품목명 (fallback)
 const MARKET_TO_ROUN = {
-  '가지':  '가지',
-  '감자':  '감자',
-  '깻잎':  '깻잎',
-  '버섯':  '느타리버섯',
-  '당근':  '당근',
-  '마늘':  '마늘',
-  '고구마':'고구마',
-  '대파':  '대파',
+  '가지':   '가지',   '감자':   '감자',   '깻잎':   '깻잎',
+  '버섯':   '느타리버섯', // variety 미매핑 시 기본값
+  '당근':   '당근',   '마늘':   '마늘',   '고구마': '고구마', '대파':   '대파',
+  '배추':   '배추',   '상추':   '상추',   '쑥갓':   '쑥갓',   '양파':   '양파',
+  '오이':   '오이',   '참나물': '참나물', '청경채': '청경채', '토마토': '토마토',
+  '파프리카':'파프리카','피망':   '피망',  '무':     '무',     '치커리': '치커리',
 };
-// 시장에서 추적할 품종 필터 (상 등급 기준)
+// 시장 (품목:품종) → 로운 품목명 (버섯류 등 variety별 분기)
+const VARIETY_TO_ROUN = {
+  '버섯:느타리버섯':  '느타리버섯', '버섯:만가닥버섯':  '느타리버섯',
+  '버섯:꽃느타리버섯':'느타리버섯', '버섯:맛느타리버섯':'느타리버섯',
+  '버섯:새송이버섯':  '새송이버섯',
+  '버섯:팽이버섯':   '팽이버섯',
+  '버섯:생표고':     '표고버섯',    '버섯:생표고 수입': '표고버섯',
+  '호박:둥근 애호박': '애호박',     '호박:쥬키니호박':  '애호박',
+  '생고추:청양고추':  '청양고추',
+};
+// 시장에서 추적할 품종 필터 (variety 매핑 없는 품목 한정)
 const MARKET_VARIETY = {
-  '가지':  '가지',
   '감자':  '홍감자',
   '깻잎':  '깻잎순',
-  '버섯':  '만가닥버섯',
   '당근':  '당근 수입',
   '마늘':  '햇마늘 대서',
 };
+
+// 시장 row → 로운 품목명 변환 헬퍼
+function marketToRounProd(item_name, variety) {
+  const vk = `${item_name}:${variety}`;
+  if (VARIETY_TO_ROUN[vk]) return VARIETY_TO_ROUN[vk];
+  const p = MARKET_TO_ROUN[item_name];
+  if (!p) return null;
+  const ev = MARKET_VARIETY[item_name];
+  if (ev && variety !== ev) return null;
+  return p;
+}
 
 // ── Fetch 전체 히스토리 ───────────────────────────────
 async function fetchAllHistory() {
@@ -352,12 +369,12 @@ async function fetchAllHistory() {
   );
   allHistoryRows = await r.json();
 
-  // market_prices 직접 조회 (시장 최저단가 시계열용 — roun_items 없는 연도 포함)
-  const rm = await fetch(
-    `${SUPABASE_URL}/rest/v1/market_prices?select=download_date,source,item_name,variety,grade,price_per_g&grade=eq.상&order=download_date.asc&limit=10000`,
-    { headers }
-  );
-  allMarketRows = await rm.json();
+  // market_prices 직접 조회 — Supabase max_rows=1000 한계 때문에 연도별 분리 fetch
+  const [rm25, rm26] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/market_prices?select=download_date,item_name,variety,grade,price_per_g&grade=eq.상&download_date=gte.2025-01-01&download_date=lt.2026-01-01&order=download_date.asc&limit=1000`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/market_prices?select=download_date,item_name,variety,grade,price_per_g&grade=eq.상&download_date=gte.2026-01-01&order=download_date.asc&limit=1000`, { headers }),
+  ]);
+  allMarketRows = [...await rm25.json(), ...await rm26.json()];
 }
 
 // ── Fetch ─────────────────────────────────────────────
@@ -730,11 +747,8 @@ function buildMonthlyAgg(year) {
     if (d.getFullYear() !== year) return;
     const month = d.getMonth() + 1;
     if (row.grade !== '상') return;
-    const rounProd = MARKET_TO_ROUN[row.item_name];
+    const rounProd = marketToRounProd(row.item_name, row.variety || '');
     if (!rounProd) return;
-    // item_mapping 품종 필터 (정의된 품종만)
-    const expectedVariety = MARKET_VARIETY[row.item_name];
-    if (expectedVariety && row.variety !== expectedVariety) return;
     if (!agg[rounProd]) agg[rounProd] = {};
     if (!agg[rounProd][month]) agg[rounProd][month] = { rounVals: [], marketVals: [] };
     if (row.price_per_g != null) {
@@ -934,10 +948,8 @@ function renderProductChart() {
     const d = new Date(row.download_date);
     if (d.getFullYear() !== prevYear) return;
     const m = d.getMonth() + 1;
-    const rounProd = MARKET_TO_ROUN[row.item_name];
+    const rounProd = marketToRounProd(row.item_name, row.variety || '');
     if (rounProd !== selectedProduct) return;
-    const ev = MARKET_VARIETY[row.item_name];
-    if (ev && row.variety !== ev) return;
     if (row.price_per_g != null) {
       if (!prevMarketByM[m]) prevMarketByM[m] = [];
       prevMarketByM[m].push(parseFloat(row.price_per_g));
