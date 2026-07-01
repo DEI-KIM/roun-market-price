@@ -981,3 +981,94 @@ function renderProductChart() {
           callbacks: {
             label: ctx => {
  
+              const v = ctx.parsed.y;
+              return v != null ? `${ctx.dataset.label}: ${v.toFixed(3)} 원/g` : null;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ── 월별 테이블 ──────────────────────────────────────
+  const MONTHS2 = [1,2,3,4,5,6,7,8,9,10,11,12];
+  const thead2 = `<thead><tr>
+    <th style="width:60px;text-align:left;padding:8px 12px;font-size:12px;color:#6B7280;font-weight:600;border-bottom:1px solid #E5E7EB">월</th>
+    <th style="text-align:right;padding:8px 12px;font-size:12px;color:#1B5E20;font-weight:600;border-bottom:1px solid #E5E7EB">로운 단가 (원/g)</th>
+    <th style="text-align:right;padding:8px 12px;font-size:12px;color:#EA580C;font-weight:600;border-bottom:1px solid #E5E7EB">시장 최저단가 (원/g)</th>
+    <th style="text-align:right;padding:8px 12px;font-size:12px;color:#6B7280;font-weight:600;border-bottom:1px solid #E5E7EB">차이 (%)</th>
+  </tr></thead>`;
+  const tbody2 = `<tbody>${MONTHS2.map(m => {
+    const rv = rounData[m-1];
+    const mv = marketData[m-1];
+    if (rv == null && mv == null) return '';
+    const diff = (rv != null && mv != null) ? ((rv - mv) / mv * 100) : null;
+    const diffStr = diff != null ? `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%` : '—';
+    const diffCls = diff != null ? (diff > 0 ? 'color:#DC2626' : 'color:#15803D') : 'color:#9CA3AF';
+    const baseStyle = 'padding:7px 12px;font-size:12px;border-bottom:1px solid #F3F4F6';
+    return `<tr>
+      <td style="${baseStyle};font-weight:600;color:#374151">${m}월</td>
+      <td style="${baseStyle};text-align:right;color:#1B5E20">${rv != null ? rv.toFixed(3) : '—'}</td>
+      <td style="${baseStyle};text-align:right;color:#EA580C">${mv != null ? mv.toFixed(3) : '—'}</td>
+      <td style="${baseStyle};text-align:right;${diffCls};font-weight:600">${diffStr}</td>
+    </tr>`;
+  }).join('')}</tbody>`;
+  document.getElementById('prod-table').innerHTML = thead2 + tbody2;
+}
+
+// ── Tab / Grade / Sort / Search ───────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  ['cards','analysis','timeseries','product'].forEach(t => {
+    const tabEl = document.getElementById(`tab-${t}`);
+    const viewEl = document.getElementById(`view-${t}`);
+    if (tabEl) tabEl.classList.toggle('active', t === tab);
+    if (viewEl) viewEl.style.display = t === tab ? '' : 'none';
+  });
+  // filter-bar 카드·분석 탭에서만 표시
+  const filterBar = document.getElementById('filter-bar');
+  if (filterBar) filterBar.style.display = (tab === 'cards' || tab === 'analysis') ? '' : 'none';
+
+  const sortGroup = document.getElementById('sort-group');
+  const sortDiv   = document.getElementById('sort-divider');
+  if (sortGroup) sortGroup.style.display = tab === 'cards' ? '' : 'none';
+  if (sortDiv)   sortDiv.style.display   = tab === 'cards' ? '' : 'none';
+
+  if (tab === 'cards' || tab === 'analysis') render();
+  else if (tab === 'timeseries') renderTimeSeries();
+}
+
+function setGrade(grade) {
+  currentGrade = grade;
+  document.querySelectorAll('.grade-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.textContent.trim() === grade)
+  );
+  render();
+}
+
+function setSort(sort) {
+  currentSort = sort;
+  document.querySelectorAll('.sort-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.textContent.replace(/[^\w가-힣]/g,'').trim() === sort)
+  );
+  render();
+}
+
+function setSearch(val) {
+  currentSearch = val.trim();
+  render();
+}
+
+function showError(msg) {
+  document.getElementById('card-grid').innerHTML =
+    `<div class="loading-wrap" style="grid-column:1/-1;color:#EF4444">${msg}</div>`;
+}
+
+// ── Boot ──────────────────────────────────────────────
+Promise.all([
+  fetchData().catch(err => showError('데이터 로드 실패: ' + err.message)),
+  fetchAllHistory().catch(err => console.error('히스토리 로드 실패:', err))
+]);
+</script>
+</body>
+</html>
