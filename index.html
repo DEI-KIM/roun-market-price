@@ -507,7 +507,7 @@ function render() {
     if (currentSort === '총사용액') return b.총사용금액 - a.총사용금액;
     if (currentSort === '총사용량') return b.총사용량_g - a.총사용량_g;
     if (currentSort === '절감률')  return (bg?.최대절감률_pct ?? -Infinity) - (ag?.최대절감률_pct ?? -Infinity);
-    if (currentSort === 'g당원가') return a.로운_단가 - b.로운_단가;
+    if (currentSort === 'g당원가') return b.로운_단가 - a.로운_단가;
     return 0;
   });
 
