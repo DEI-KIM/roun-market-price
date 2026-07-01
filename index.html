@@ -202,6 +202,7 @@
     <button class="sort-btn" onclick="setSort('총사용량')">🌿 총사용량</button>
     <button class="sort-btn" onclick="setSort('절감률')">🎯 절감률</button>
     <button class="sort-btn" onclick="setSort('품목순')">📦 품목순</button>
+    <button class="sort-btn" onclick="setSort('g당원가')">💰 g당원가</button>
   </div>
 
   <div class="divider"></div>
@@ -506,6 +507,7 @@ function render() {
     if (currentSort === '총사용액') return b.총사용금액 - a.총사용금액;
     if (currentSort === '총사용량') return b.총사용량_g - a.총사용량_g;
     if (currentSort === '절감률')  return (bg?.최대절감률_pct ?? -Infinity) - (ag?.최대절감률_pct ?? -Infinity);
+    if (currentSort === 'g당원가') return a.로운_단가 - b.로운_단가;
     return 0;
   });
 
@@ -923,6 +925,27 @@ function renderProductChart() {
 
   const rounData   = MONTHS.map(m => avg(rounByM[m]   ?? []));
   const marketData = MONTHS.map(m => avg(marketByM[m] ?? []));
+
+  // 전년도 시장 최저단가 (allMarketRows 직접 사용 — roun_items 없는 연도 포함)
+  const prevYear = prodYear - 1;
+  const prevMarketByM = {};
+  allMarketRows.forEach(row => {
+    if (!row.download_date) return;
+    const d = new Date(row.download_date);
+    if (d.getFullYear() !== prevYear) return;
+    const m = d.getMonth() + 1;
+    const rounProd = MARKET_TO_ROUN[row.item_name];
+    if (rounProd !== selectedProduct) return;
+    const ev = MARKET_VARIETY[row.item_name];
+    if (ev && row.variety !== ev) return;
+    if (row.price_per_g != null) {
+      if (!prevMarketByM[m]) prevMarketByM[m] = [];
+      prevMarketByM[m].push(parseFloat(row.price_per_g));
+    }
+  });
+  const prevMarketData = MONTHS.map(m => avg(prevMarketByM[m] ?? []));
+  const hasPrevMarket  = prevMarketData.some(v => v !== null);
+
   const hasAny = rounData.some(v => v !== null) || marketData.some(v => v !== null);
 
   document.getElementById('prod-empty').style.display    = hasAny ? 'none' : 'flex';
@@ -961,7 +984,20 @@ function renderProductChart() {
           fill: false,
           spanGaps: false,
           tension: 0.3
-        }
+        },
+        ...(hasPrevMarket ? [{
+          label: `시장 최저단가 - 상등급 (${prevYear}년)`,
+          data: prevMarketData,
+          borderColor: '#9CA3AF',
+          backgroundColor: '#9CA3AF10',
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          fill: false,
+          spanGaps: false,
+          tension: 0.3
+        }] : [])
       ]
     },
     options: {
