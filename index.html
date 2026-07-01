@@ -932,9 +932,19 @@ function renderProductChart() {
       rounByM[m].push(parseFloat(row['로운_단가']));
       seenRoun.add(rKey);
     }
-    if (row['등급'] === '상' && row['시장_최저단가_g'] != null) {
+  });
+
+  // 시장 최저단가: allMarketRows 직접 사용 (VIEW JOIN 의존 제거 → 25년 전체/26년 누적 정상 표시)
+  allMarketRows.forEach(row => {
+    if (!row.download_date) return;
+    const d = new Date(row.download_date);
+    if (d.getFullYear() !== prodYear) return;
+    const m = d.getMonth() + 1;
+    const rounProd = marketToRounProd(row.item_name, row.variety || '');
+    if (rounProd !== selectedProduct) return;
+    if (row.price_per_g != null) {
       if (!marketByM[m]) marketByM[m] = [];
-      marketByM[m].push(parseFloat(row['시장_최저단가_g']));
+      marketByM[m].push(parseFloat(row.price_per_g));
     }
   });
 
